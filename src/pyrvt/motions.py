@@ -599,7 +599,7 @@ class SourceTheoryMotion(RvtMotion):
                 # 130 km < R
                 duration_path += 0.04 * (self.hypo_distance - 130.0)
         else:
-            raise NotImplementedError
+            duration_path = 0.05 * self.hypo_distance
 
         return duration_source + duration_path
 
