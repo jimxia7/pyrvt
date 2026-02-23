@@ -425,7 +425,10 @@ class SourceTheoryMotion(RvtMotion):
         self._disable_site_amp = disable_site_amp
         self.magnitude = magnitude
         self.distance = distance
-        self.region = peak_calculators.get_region(region)
+        if region:
+            self.region = peak_calculators.get_region(region)
+        else:
+            self.region = None
 
         if self.region == "wna":
             # Default parameters for the WUS from Campbell (2003)
