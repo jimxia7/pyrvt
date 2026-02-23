@@ -356,6 +356,13 @@ class SourceTheoryMotion(RvtMotion):
         region: str,
         stress_drop: float | None = None,
         depth: float | None = 8,
+        shear_velocity: float | None = None,
+        path_atten_coeff: float | None = None,
+        path_atten_power: float | None = None,
+        density: float | None = None,
+        site_atten: float | None = None,
+        geometric_spreading: list[tuple[float, float | None]] | None = None,
+        site_amp: interp1d | None = None,
         peak_calculator: str | peak_calculators.Calculator | None = None,
         calc_kwds: dict | None = None,
         freqs: npt.ArrayLike | None = None,
@@ -514,7 +521,20 @@ class SourceTheoryMotion(RvtMotion):
             )
 
         else:
-            raise NotImplementedError
+            self.shear_velocity = shear_velocity
+            self.density = density
+            self.path_atten_coeff = path_atten_coeff
+            self.path_atten_power = path_atten_power
+            self.site_atten = site_atten
+
+            self.geometric_spreading = geometric_spreading
+
+            if stress_drop:
+                self.stress_drop = stress_drop
+            else:
+                self.stress_drop = calc_stress_drop(magnitude)
+
+            self.site_amp = site_amp
 
         # Depth to rupture
         self.depth = depth
