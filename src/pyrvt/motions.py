@@ -108,39 +108,29 @@ def calc_sdof_tf(
         freqs**2 - osc_freq**2 - 2.0j * osc_damping * osc_freq * freqs
     )
 
-'''
-def calc_stress_drop(magnitude: float) -> float:
-    """Stress drop using Atkinson & Boore (2011) model.
+
+def calc_stress_drop(magnitude: float, method: str = "Stafford2022") -> float:
+    """Calculating Stress drops.
 
     Parameters
     ----------
     magnitude : float
-         Moment magnitude of the stress drop.
+        Moment magnitude of the stress drop.
 
+    Method: String
+        Atkinson&Boore2011: Atkinson & Boore (2011) model
+        Stafford2022: Stafford et al. (2022) model
+        
     Returns
     -------
     stress_drop : float
         Stress drop (bars).
 
     """
-    return 10 ** (3.45 - 0.2 * max(magnitude, 5.0))
-'''
-
-def calc_stress_drop(magnitude: float) -> float:
-    """Stress drop using Stafford (2022) model.
-
-    Parameters
-    ----------
-    magnitude : float
-         Moment magnitude of the stress drop.
-
-    Returns
-    -------
-    stress_drop : float
-        Stress drop (bars).
-
-    """
-    return np.exp(2.296+0.4624*np.min([magnitude-5.0,0.0]))* 10
+    if method = "Atkinson&Boore2011":
+        return 10 ** (3.45 - 0.2 * max(magnitude, 5.0))
+    elif method = "Stafford2022":
+        return np.exp(2.296+0.4624*np.min([magnitude-5.0,0.0]))* 10
 
 
 def calc_geometric_spreading(
