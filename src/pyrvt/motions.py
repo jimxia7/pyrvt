@@ -127,9 +127,9 @@ def calc_stress_drop(magnitude: float, method: str = "Stafford2022") -> float:
         Stress drop (bars).
 
     """
-    if method = "Atkinson&Boore2011":
+    if method == "Atkinson&Boore2011":
         return 10 ** (3.45 - 0.2 * max(magnitude, 5.0))
-    elif method = "Stafford2022":
+    elif method == "Stafford2022":
         return np.exp(2.296+0.4624*np.min([magnitude-5.0,0.0]))* 10
 
 
