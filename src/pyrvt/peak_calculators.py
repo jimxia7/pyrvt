@@ -19,33 +19,7 @@ import numpy as np
 import numpy.typing as npt
 from scipy.integrate import quad
 from scipy.interpolate import LinearNDInterpolator
-from scipy.signal import argrelmax
-
-
-# FIXME: Is this needed?
-@numba.jit(nopython=True)
-def trapz(x: npt.ArrayLike, y: npt.ArrayLike) -> float:
-    """Trapezoidal integration written in numba.
-
-    Parameters
-    ----------
-    x : array_like
-        sample points to corresponding to the `y` values.
-    y : array_like
-        Input array to integrate
-
-    Returns
-    -------
-    total : float
-        Definite integral as approximated by the trapezoidal rule.
-
-    """
-    n = x.shape[0]
-    total = 0
-    for i in range(n - 1):
-        total += 0.5 * (y[i] + y[i + 1]) * (x[i + 1] - x[i])
-
-    return total
+from scipy.signal import argrelma
 
 
 # From: https://github.com/scipy/scipy/issues/4831#issuecomment-258501648
