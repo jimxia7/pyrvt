@@ -13,7 +13,7 @@ from pathlib import Path
 import numpy as np
 import numpy.typing as npt
 from scipy.constants import g as gravity
-from scipy.interpolate import interp1d
+from scipy.interpolate import make_interp_spline
 from scipy.stats import linregress
 
 from . import peak_calculators
@@ -421,7 +421,7 @@ class SourceTheoryMotion(RvtMotion):
             # Crustal amplification from Campbell (2003) using the
             # log-frequency and the amplification based on a quarter-wave
             # length approximation
-            self.site_amp = interp1d(
+            self.site_amp = make_interp_spline(
                 np.log(
                     [
                         0.01,
@@ -452,7 +452,7 @@ class SourceTheoryMotion(RvtMotion):
                     4.00,
                     4.40,
                 ],
-                bounds_error=False,
+                k=1,
             )
         elif self.region == "cena":
             # Default parameters for the CEUS from Campbell (2003)
@@ -472,7 +472,7 @@ class SourceTheoryMotion(RvtMotion):
             # Crustal amplification from Campbell (2003) using the
             # log-frequency and the amplification based on a quarter-wave
             # length approximation
-            self.site_amp = interp1d(
+            self.site_amp = make_interp_spline(
                 np.log(
                     [
                         0.01,
@@ -509,8 +509,7 @@ class SourceTheoryMotion(RvtMotion):
                     1.15,
                     1.15,
                 ],
-                bounds_error=False,
-                fill_value=(1.0, 1.15),
+                k=1,
             )
 
         else:
@@ -610,14 +609,9 @@ class SourceTheoryMotion(RvtMotion):
         site_dim = np.exp(-np.pi * self.site_atten * self._freqs)
 
         ln_freqs = np.log(self._freqs)
-        site_amp = self.site_amp(ln_freqs)
-        if np.any(np.isnan(site_amp)):
-            # Need to extrapolate
-            mask = ln_freqs < self.site_amp.x[0]
-            site_amp[mask] = self.site_amp.y[0]
-
-            mask = self.site_amp.x[-1] < ln_freqs
-            site_amp[mask] = self.site_amp.y[-1]
+        site_amp = self.site_amp(
+            np.clip(ln_freqs, self.site_amp.t[1], self.site_amp.t[-2])
+        )
 
         site_comp = 1 if self._disable_site_amp else (site_amp * site_dim)
 
@@ -831,15 +825,14 @@ class StaffordEtAl22Motion(RvtMotion):
             ).view(np.recarray)
 
             _ln_site_amp = np.log(data["site_amp"])
-            cls._ln_site_amp_interpolator = interp1d(
+            cls._ln_site_amp_interpolator = make_interp_spline(
                 data["freq"],
                 _ln_site_amp,
-                kind="linear",
-                bounds_error=False,
-                fill_value=(_ln_site_amp[0], _ln_site_amp[-1]),
+                k=1,
             )
 
-        return np.exp(cls._ln_site_amp_interpolator(freqs)) * np.exp(
+        spl = cls._ln_site_amp_interpolator
+        return np.exp(spl(np.clip(freqs, spl.t[1], spl.t[-2]))) * np.exp(
             -np.pi * site_atten * freqs
         )
 
