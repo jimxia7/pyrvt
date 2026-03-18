@@ -19,7 +19,7 @@ import numpy as np
 import numpy.typing as npt
 from scipy.integrate import quad
 from scipy.interpolate import LinearNDInterpolator
-from scipy.signal import argrelma
+from scipy.signal import argrelmax
 
 
 # From: https://github.com/scipy/scipy/issues/4831#issuecomment-258501648
