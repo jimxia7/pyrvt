@@ -21,11 +21,6 @@ from scipy.integrate import quad
 from scipy.interpolate import LinearNDInterpolator
 from scipy.signal import argrelmax
 
-try:
-    _trapz = np.trapezoid
-except AttributeError:
-    _trapz = np.trapz
-
 
 # FIXME: Is this needed?
 @numba.jit(nopython=True)
@@ -189,7 +184,7 @@ def calc_moments(
 
     # Use trapzoidal integration to compute the requested moments.
     moments = [
-        2.0 * _trapz(np.power(2 * np.pi * freqs, o) * squared_fa, x=freqs)
+        2.0 * np.trapezoid(np.power(2 * np.pi * freqs, o) * squared_fa, x=freqs)
         for o in orders
     ]
 
@@ -231,7 +226,7 @@ class SquaredSpectrum:
         try:
             moment = self._moments[num]
         except KeyError:
-            moment = 2.0 * _trapz(
+            moment = 2.0 * np.trapezoid(
                 np.power(2 * np.pi * self._freqs, num) * self._squared_fa, x=self._freqs
             )
             self._moments[num] = moment
@@ -1342,7 +1337,7 @@ class SeifriedEtAl2025(Calculator):
         """
         m0, m2 = sspectrum.moments(0, 2)
 
-        tE = 4 * _trapz(np.square(sspectrum.squared_fa), x=sspectrum.freqs) / m0**2
+        tE = 4 * np.trapezoid(np.square(sspectrum.squared_fa), x=sspectrum.freqs) / m0**2
 
         # Central frequency
         freq_cent = np.sqrt(m2 / m0) / (2 * np.pi)

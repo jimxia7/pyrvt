@@ -4,7 +4,7 @@ import numpy as np
 import pyexcel
 import pystrata
 import pytest
-from numpy.testing import assert_allclose, assert_string_equal
+from numpy.testing import assert_allclose
 
 import pyrvt
 
@@ -67,11 +67,11 @@ def bj84_pc():
 
 
 def test_name(bj84_pc):
-    assert_string_equal(bj84_pc.NAME, "Boore & Joyner (1984)")
+    assert bj84_pc.NAME == "Boore & Joyner (1984)"
 
 
 def test_abbrev(bj84_pc):
-    assert_string_equal(bj84_pc.ABBREV, "BJ84")
+    assert bj84_pc.ABBREV == "BJ84"
 
 
 @pytest.mark.parametrize(

@@ -1,5 +1,5 @@
 version = 1
-revision = 2
+revision = 3
 requires-python = ">=3.10"
 resolution-markers = [
     "python_full_version >= '3.12'",
@@ -1672,8 +1672,8 @@ requires-dist = [
     { name = "matplotlib", marker = "extra == 'test'" },
     { name = "myst-parser", marker = "extra == 'docs'" },
     { name = "nbsphinx", marker = "extra == 'docs'" },
-    { name = "numba" },
-    { name = "numpy" },
+    { name = "numba", specifier = ">=0.60" },
+    { name = "numpy", specifier = ">=2.0" },
     { name = "pandas", marker = "extra == 'test'" },
     { name = "pyexcel" },
     { name = "pyexcel-io" },
@@ -1683,7 +1683,7 @@ requires-dist = [
     { name = "pytest", marker = "extra == 'test'" },
     { name = "pytest-cov", marker = "extra == 'test'" },
     { name = "ruff", marker = "extra == 'style'" },
-    { name = "scipy" },
+    { name = "scipy", specifier = ">=1.14" },
     { name = "sphinx", marker = "extra == 'docs'" },
     { name = "sphinx-autobuild", marker = "extra == 'docs'" },
     { name = "sphinx-copybutton", marker = "extra == 'docs'" },

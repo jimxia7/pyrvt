@@ -11,9 +11,9 @@ readme = "README.md"
 license = { text = "MIT" }
 requires-python = ">=3.10"
 dependencies = [
-  "numpy",
-  "numba",
-  "scipy",
+  "numpy>=2.0",
+  "numba>=0.60",
+  "scipy>=1.14",
   "pyexcel",
   "pyexcel-io",
   "pyexcel-xlsx",
