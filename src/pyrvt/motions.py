@@ -195,6 +195,11 @@ class RvtMotion:
         self._fourier_amps = fourier_amps
         self._duration = duration
 
+        self._pgv = None
+        self._pga = None
+        self._arias_intensity = None
+        self._cav = None
+
         if self._freqs is not None:
             self._freqs, self._fourier_amps = sort_increasing(
                 self._freqs, self._fourier_amps
@@ -268,6 +273,125 @@ class RvtMotion:
         )
 
         return resp
+
+    @property
+    def angular_freqs(self) -> np.ndarray:
+        """Angular frequency values (rad/sec)."""
+        return 2 * np.pi * self._freqs
+
+    @property
+    def pgv(self) -> float:
+        """Peak ground velocity (cm/sec)."""
+        if self._pgv is None:
+            self._pgv = self.calc_pgv()
+        return self._pgv
+
+    @property
+    def pga(self) -> float:
+        """Peak ground acceleration (g)."""
+        if self._pga is None:
+            self._pga = self.calc_pga()
+        return self._pga
+
+    @property
+    def arias_intensity(self) -> float:
+        """Arias intensity (m/s)."""
+        if self._arias_intensity is None:
+            self._arias_intensity = self.calc_arias_intensity()
+        return self._arias_intensity
+
+    @property
+    def cav(self) -> float:
+        """Cumulative absolute velocity (m/s)."""
+        if self._cav is None:
+            self._cav = self.calc_cav()
+        return self._cav
+
+    def calc_pgv(self, tf: npt.ArrayLike | None = None) -> float:
+        """Compute the peak ground velocity.
+
+        Parameters
+        ----------
+        tf : array_like, optional
+            Transfer function to apply to the motion. If ``None``, no
+            transfer function is applied.
+
+        Returns
+        -------
+        pgv : float
+            Peak ground velocity (cm/sec).
+
+        """
+        tf = 1 if tf is None else np.asarray(tf)
+        # Compute transfer function from acceleration to velocity
+        # only over non-zero frequencies
+        mask = ~np.isclose(self.angular_freqs, 0)
+        tf_av = np.zeros_like(mask, dtype=complex)
+        tf_av[mask] = 1 / (self.angular_freqs[mask] * 1j)
+
+        return gravity * 100 * self.calc_peak(tf_av * tf)
+
+    def calc_pga(self, tf: npt.ArrayLike | None = None) -> float:
+        """Compute the peak ground acceleration.
+
+        Parameters
+        ----------
+        tf : array_like, optional
+            Transfer function to apply to the motion. If ``None``, no
+            transfer function is applied.
+
+        Returns
+        -------
+        pga : float
+            Peak ground acceleration (g).
+
+        """
+        tf = 1 if tf is None else np.asarray(tf)
+        return self.calc_peak(tf)
+
+    def calc_arias_intensity(self, tf: npt.ArrayLike | None = None) -> float:
+        """Compute the Arias intensity.
+
+        Parameters
+        ----------
+        tf : array_like, optional
+            Transfer function to apply to the motion. If ``None``, no
+            transfer function is applied.
+
+        Returns
+        -------
+        arias_intensity : float
+            Arias intensity (m/s).
+
+        """
+        tf = 1 if tf is None else np.asarray(tf)
+        fa = np.abs(tf) * self.fourier_amps
+        m0 = np.trapezoid(fa**2, self.freqs)
+        return np.pi * gravity / 2 * m0
+
+    def calc_cav(self, tf: npt.ArrayLike | None = None) -> float:
+        """Compute the cumulative absolute velocity (CAV).
+
+        Uses an empirical regression on Arias intensity and duration based on
+        observed ground motions.
+
+        Parameters
+        ----------
+        tf : array_like, optional
+            Transfer function to apply to the motion. If ``None``, no
+            transfer function is applied.
+
+        Returns
+        -------
+        cav : float
+            Cumulative absolute velocity (m/s).
+
+        """
+        return np.exp(
+            1.553
+            + 0.496 * np.log(self.calc_arias_intensity(tf))
+            + 0.356 * np.log(self.duration)
+        )
 
     def calc_peak(self, transfer_func: npt.ArrayLike | None = None, **kwds) -> float:
         """Compute the peak response.
