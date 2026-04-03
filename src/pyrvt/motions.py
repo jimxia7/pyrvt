@@ -109,13 +109,17 @@ def calc_sdof_tf(
     )
 
 
-def calc_stress_drop(magnitude: float) -> float:
-    """Stress drop using Atkinson & Boore (2011) model.
+def calc_stress_drop(magnitude: float, method: str = "Atkinson&Boore2011") -> float:
+    """Calculating Stress drops.
 
     Parameters
     ----------
     magnitude : float
-         Moment magnitude of the stress drop.
+        Moment magnitude of the stress drop.
+
+    Method: String
+        Atkinson&Boore2011: Atkinson & Boore (2011) model
+        Stafford2022: Stafford et al. (2022) model
 
     Returns
     -------
@@ -123,7 +127,17 @@ def calc_stress_drop(magnitude: float) -> float:
         Stress drop (bars).
 
     """
-    return 10 ** (3.45 - 0.2 * max(magnitude, 5.0))
+
+    if method == "Atkinson&Boore2011":
+        return 10 ** (3.45 - 0.2 * max(magnitude, 5.0))
+    elif method == "Stafford2022":
+        return np.exp(2.296 + 0.4624 * np.min([magnitude - 5.0, 0.0])) * 10
+    elif method is None:
+        return 10 ** (3.45 - 0.2 * max(magnitude, 5.0))
+    else:
+        raise NotImplementedError(
+            f"Method {method} not implemented for stress drop calculation."
+        )
 
 
 def calc_geometric_spreading(
@@ -478,12 +492,12 @@ class SourceTheoryMotion(RvtMotion):
         magnitude: float,
         distance: float,
         region: str,
-        stress_drop: float | None = None,
         depth: float | None = 8,
         peak_calculator: str | peak_calculators.Calculator | None = None,
         calc_kwds: dict | None = None,
         freqs: npt.ArrayLike | None = None,
         disable_site_amp: bool = False,
+        **kwargs,
     ) -> None:
         """Initialize the motion.
 
@@ -496,11 +510,6 @@ class SourceTheoryMotion(RvtMotion):
         region : str
             Region for the parameters. Either 'cena' for Central and Eastern North
             America, or 'wna' for Western North America.
-        stress_drop : float, optional
-            Stress drop of the event (bars).  If `None`, then the default value
-            is used. For `region` is 'cena', the default value is computed by
-            the  model, while for `region` is 'wna' the
-            default value is 100 bars.
         depth : float, optional
             Hypocenter depth (km). The `depth` is combined with the `distance`
             to compute the hypocentral distance.
@@ -519,6 +528,25 @@ class SourceTheoryMotion(RvtMotion):
         disable_site_amp: bool, optional
             if the crustal site amplification should be disable. Defaults to *False*.
 
+        **kwargs: optional arguments
+            The following parameters can be specified:
+                - `shear_velocity`: shear velocity (km/s).
+                - `path_atten_coeff`: path attenuation coefficient.
+                    Quality Factor = path_atten_coeff * f^path_atten_power
+                - `path_atten_power`: path attenuation power.
+                    Quality Factor = path_atten_coeff * f^path_atten_power
+                - `density`: density (g/cm³).
+                - `site_atten`: site attenuation (s).
+                - `geometric_spreading`: geometric spreading parameters.
+                - 'stress_drop': float, optional
+                    Stress drop of the event (bars).  If `None`, then the default value
+                    is used. For `region` is 'cena', the default value is computed by
+                    the  model, while for `region` is 'wna' the
+                    default value is 100 bars.
+                - 'stress_drop_method': define how the stress drop is computed
+                    useless if stress_drop is specified.
+                - 'site_amp': site amplification function.
+
         """
         super().__init__(peak_calculator=peak_calculator, calc_kwds=calc_kwds)
 
@@ -529,111 +557,136 @@ class SourceTheoryMotion(RvtMotion):
 
         if self.region == "wna":
             # Default parameters for the WUS from Campbell (2003)
-            self.shear_velocity = 3.5
-            self.path_atten_coeff = 180.0
-            self.path_atten_power = 0.45
-            self.density = 2.8
-            self.site_atten = 0.04
+            self.shear_velocity = kwargs.get("shear_velocity", 3.5)
+            self.path_atten_coeff = kwargs.get("path_atten_coeff", 180.0)
+            self.path_atten_power = kwargs.get("path_atten_power", 0.45)
+            self.density = kwargs.get("density", 2.8)
+            self.site_atten = kwargs.get("site_atten", 0.04)
 
-            self.geometric_spreading = [(1, 40), (0.5, None)]
+            self.geometric_spreading = kwargs.get(
+                "geometric_spreading", [(1, 40), (0.5, None)]
+            )
+
+            stress_drop = kwargs.get("stress_drop", None)
+            stress_drop_method = kwargs.get("stress_drop_method", None)
 
             if stress_drop:
                 self.stress_drop = stress_drop
+            elif stress_drop_method:
+                self.stress_drop = calc_stress_drop(
+                    magnitude, method=stress_drop_method
+                )
             else:
                 self.stress_drop = 100.0
 
             # Crustal amplification from Campbell (2003) using the
             # log-frequency and the amplification based on a quarter-wave
             # length approximation
-            self.site_amp = make_interp_spline(
-                np.log(
+            self.site_amp = kwargs.get(
+                "site_amp",
+                make_interp_spline(
+                    np.log(
+                        [
+                            0.01,
+                            0.09,
+                            0.16,
+                            0.51,
+                            0.84,
+                            1.25,
+                            2.26,
+                            3.17,
+                            6.05,
+                            16.60,
+                            61.20,
+                            100.00,
+                        ]
+                    ),
                     [
-                        0.01,
-                        0.09,
-                        0.16,
-                        0.51,
-                        0.84,
-                        1.25,
-                        2.26,
-                        3.17,
-                        6.05,
-                        16.60,
-                        61.20,
-                        100.00,
-                    ]
+                        1.00,
+                        1.10,
+                        1.18,
+                        1.42,
+                        1.58,
+                        1.74,
+                        2.06,
+                        2.25,
+                        2.58,
+                        3.13,
+                        4.00,
+                        4.40,
+                    ],
+                    k=1,
                 ),
-                [
-                    1.00,
-                    1.10,
-                    1.18,
-                    1.42,
-                    1.58,
-                    1.74,
-                    2.06,
-                    2.25,
-                    2.58,
-                    3.13,
-                    4.00,
-                    4.40,
-                ],
-                k=1,
             )
+
         elif self.region == "cena":
             # Default parameters for the CEUS from Campbell (2003)
-            self.shear_velocity = 3.6
-            self.density = 2.8
-            self.path_atten_coeff = 680.0
-            self.path_atten_power = 0.36
-            self.site_atten = 0.006
+            self.shear_velocity = kwargs.get("shear_velocity", 3.6)
+            self.path_atten_coeff = kwargs.get("path_atten_coeff", 680.0)
+            self.path_atten_power = kwargs.get("path_atten_power", 0.36)
+            self.density = kwargs.get("density", 2.8)
+            self.site_atten = kwargs.get("site_atten", 0.006)
 
-            self.geometric_spreading = [(1, 70), (0, 130), (0.5, None)]
+            self.geometric_spreading = kwargs.get(
+                "geometric_spreading", [(1, 70), (0, 130), (0.5, None)]
+            )
+
+            stress_drop = kwargs.get("stress_drop", None)
+            stress_drop_method = kwargs.get("stress_drop_method", None)
 
             if stress_drop:
                 self.stress_drop = stress_drop
+            elif stress_drop_method:
+                self.stress_drop = calc_stress_drop(
+                    magnitude, method=stress_drop_method
+                )
             else:
                 self.stress_drop = calc_stress_drop(magnitude)
 
             # Crustal amplification from Campbell (2003) using the
             # log-frequency and the amplification based on a quarter-wave
             # length approximation
-            self.site_amp = make_interp_spline(
-                np.log(
+            self.site_amp = kwargs.get(
+                "site_amp",
+                make_interp_spline(
+                    np.log(
+                        [
+                            0.01,
+                            0.10,
+                            0.20,
+                            0.30,
+                            0.50,
+                            0.90,
+                            1.25,
+                            1.80,
+                            3.00,
+                            5.30,
+                            8.00,
+                            14.00,
+                            30.00,
+                            60.00,
+                            100.00,
+                        ]
+                    ),
                     [
-                        0.01,
-                        0.10,
-                        0.20,
-                        0.30,
-                        0.50,
-                        0.90,
-                        1.25,
-                        1.80,
-                        3.00,
-                        5.30,
-                        8.00,
-                        14.00,
-                        30.00,
-                        60.00,
-                        100.00,
-                    ]
+                        1.00,
+                        1.02,
+                        1.03,
+                        1.05,
+                        1.07,
+                        1.09,
+                        1.11,
+                        1.12,
+                        1.13,
+                        1.14,
+                        1.15,
+                        1.15,
+                        1.15,
+                        1.15,
+                        1.15,
+                    ],
+                    k=1,
                 ),
-                [
-                    1.00,
-                    1.02,
-                    1.03,
-                    1.05,
-                    1.07,
-                    1.09,
-                    1.11,
-                    1.12,
-                    1.13,
-                    1.14,
-                    1.15,
-                    1.15,
-                    1.15,
-                    1.15,
-                    1.15,
-                ],
-                k=1,
             )
 
         else:
