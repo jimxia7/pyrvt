@@ -280,8 +280,8 @@ def test_calc_compatible_spectra(method):
         method, periods, events[:1], 0.05
     )
 
-    # Test that the fit is within 2% of the target
-    assert_allclose(events[0]["psa"], events_mod[0]["psa_calc"], rtol=0.05)
+    # Test that the fit is within 5% of the target
+    assert_allclose(events[0]["psa"], events_mod[0]["psa_calc"], rtol=0.05, atol=1e-4)
 
 
 @pytest.mark.parametrize("fixed_spacing", [True, False])

@@ -21,7 +21,6 @@ from scipy.integrate import quad
 from scipy.interpolate import LinearNDInterpolator
 from scipy.signal import argrelmax
 
-
 # From: https://github.com/scipy/scipy/issues/4831#issuecomment-258501648
 # Set the signature of the future types function
 # The second argument must be a pointer or it won't work right,
@@ -1311,7 +1310,9 @@ class SeifriedEtAl2025(Calculator):
         """
         m0, m2 = sspectrum.moments(0, 2)
 
-        tE = 4 * np.trapezoid(np.square(sspectrum.squared_fa), x=sspectrum.freqs) / m0**2
+        tE = (
+            4 * np.trapezoid(np.square(sspectrum.squared_fa), x=sspectrum.freqs) / m0**2
+        )
 
         # Central frequency
         freq_cent = np.sqrt(m2 / m0) / (2 * np.pi)
