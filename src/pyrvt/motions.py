@@ -931,7 +931,7 @@ class StaffordEtAl22Motion(RvtMotion):
             raise NotImplementedError
 
         # Stress drop in bars
-        stress_drop = np.exp(
+        self.stress_drop = np.exp(
             ln_ds0
             + dln_ds0 * np.minimum(mag - 5, 0)
             + delta_ztor * (dz_a + dz_b / np.cosh(2 * np.maximum(mag - 4.5, 0)))
@@ -941,7 +941,7 @@ class StaffordEtAl22Motion(RvtMotion):
         const = (0.55 / np.sqrt(2) * 2) / (4 * np.pi * density * shear_vel**3) * 1e-20
         seismic_moment = 10 ** (1.5 * (mag + 10.7))
 
-        corner_freq = 4.9058e6 * shear_vel * (stress_drop / seismic_moment) ** (1 / 3)
+        corner_freq = 4.9058e6 * shear_vel * (self.stress_drop / seismic_moment) ** (1 / 3)
         source_comp = (const * seismic_moment) / (1 + (self._freqs / corner_freq) ** 2)
 
         # Path scaling
