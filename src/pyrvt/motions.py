@@ -988,7 +988,7 @@ class StaffordEtAl22Motion(RvtMotion):
         self._fourier_amps = conv * self.source_comp * self.path_comp * site_tf
         self._dist_ps = dist_ps
 
-        self._duration = StaffordEtAl22Motion.calc_duration(corner_freq, dist_ps)
+        self._duration = StaffordEtAl22Motion.calc_duration(self.corner_freq, dist_ps)
 
     @classmethod
     def site_amp(cls, freqs: npt.ArrayLike, site_atten: float) -> np.ndarray:
