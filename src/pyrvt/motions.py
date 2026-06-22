@@ -952,7 +952,7 @@ class StaffordEtAl22Motion(RvtMotion):
             + h_b * mag
             + ((h_b - h_c) / h_d) * np.log(1 + np.exp(-h_d * (mag - h_e)))
         )
-        self.dist_ps = dist_rup + self.fault_fact
+        dist_ps = dist_rup + self.fault_fact
         # Geometric spreading term
         if method == "continuous":
             self.geom_spread = np.exp(
