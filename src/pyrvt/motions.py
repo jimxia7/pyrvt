@@ -985,7 +985,7 @@ class StaffordEtAl22Motion(RvtMotion):
             site_tf = StaffordEtAl22Motion.site_amp(self._freqs, site_atten)
 
         # Combine the three components and convert from displacement to acceleration
-        self._fourier_amps = conv * source_comp * path_comp * site_tf
+        self._fourier_amps = conv * self.source_comp * self.path_comp * site_tf
         self._dist_ps = dist_ps
 
         self._duration = StaffordEtAl22Motion.calc_duration(corner_freq, dist_ps)
