@@ -938,43 +938,43 @@ class StaffordEtAl22Motion(RvtMotion):
         )
 
         # Source spectrum
-        const = (0.55 / np.sqrt(2) * 2) / (4 * np.pi * density * shear_vel**3) * 1e-20
-        seismic_moment = 10 ** (1.5 * (mag + 10.7))
+        self.const = (0.55 / np.sqrt(2) * 2) / (4 * np.pi * density * shear_vel**3) * 1e-20
+        self.seismic_moment = 10 ** (1.5 * (mag + 10.7))
 
-        corner_freq = 4.9058e6 * shear_vel * (self.stress_drop / seismic_moment) ** (1 / 3)
-        source_comp = (const * seismic_moment) / (1 + (self._freqs / corner_freq) ** 2)
+        self.corner_freq = 4.9058e6 * shear_vel * (self.stress_drop / self.seismic_moment) ** (1 / 3)
+        self.source_comp = (self.const * self.seismic_moment) / (1 + (self._freqs / self.corner_freq) ** 2)
 
         # Path scaling
 
         # Finite fault factor h(m)
-        fault_fact = np.exp(
+        self.fault_fact = np.exp(
             h_a
             + h_b * mag
             + ((h_b - h_c) / h_d) * np.log(1 + np.exp(-h_d * (mag - h_e)))
         )
-        dist_ps = dist_rup + fault_fact
+        self.dist_ps = dist_rup + self.fault_fact
         # Geometric spreading term
         if method == "continuous":
-            geom_spread = np.exp(
+            self.geom_spread = np.exp(
                 -y_1 * np.log(dist_ps)
                 + (y_1 - y_f) / 2 * np.log((dist_rup**2 + r_t**2) / (1**2 + r_t**2))
             )
-            n = n_a + n_b * np.tanh(mag - n_c)
-            dist_ae = dist_rup
+            self.n = n_a + n_b * np.tanh(mag - n_c)
+            self.dist_ae = dist_rup
         elif method == "trilinear":
-            geom_spread = calc_geometric_spreading(
+            self.geom_spread = calc_geometric_spreading(
                 dist_ps, [(y_1, 25), (y_2, 85), (y_f, None)]
             )
-            dist_ae = dist_ps
+            self.dist_ae = dist_ps
         else:
             raise NotImplementedError
 
         # Distance metric is different between the two forms
-        anelastic_atten = np.exp(
-            -(np.pi * self._freqs ** (1 - n) * dist_ae) / (Q_0 * shear_vel)
+        self.anelastic_atten = np.exp(
+            -(np.pi * self._freqs ** (1 - self.n) * self.dist_ae) / (Q_0 * shear_vel)
         )
 
-        path_comp = geom_spread * anelastic_atten
+        self.path_comp = self.geom_spread * self.anelastic_atten
 
         # Convert to acceleration (cm/s) and then into g-se
         conv = (2 * np.pi * self._freqs) ** 2 / (gravity * 100)
