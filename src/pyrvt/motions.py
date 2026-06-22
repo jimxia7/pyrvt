@@ -718,26 +718,26 @@ class SourceTheoryMotion(RvtMotion):
 
         """
         # Source component
-        duration_source = 1.0 / self.corner_freq
+        self.duration_source = 1.0 / self.corner_freq
 
         # Path component
         if self.region == "wna":
-            duration_path = 0.05 * self.hypo_distance
+            self.duration_path = 0.05 * self.hypo_distance
         elif self.region == "cena":
-            duration_path = 0.0
+            self.duration_path = 0.0
             if self.hypo_distance > 10:
                 # 10 < R <= 70 km
-                duration_path += 0.16 * (min(self.hypo_distance, 70) - 10.0)
+                self.duration_path += 0.16 * (min(self.hypo_distance, 70) - 10.0)
             if self.hypo_distance > 70:
                 # 70 < R <= 130 km
-                duration_path += -0.03 * (min(self.hypo_distance, 130) - 70.0)
+                self.duration_path += -0.03 * (min(self.hypo_distance, 130) - 70.0)
             if self.hypo_distance > 130:
                 # 130 km < R
-                duration_path += 0.04 * (self.hypo_distance - 130.0)
+                self.duration_path += 0.04 * (self.hypo_distance - 130.0)
         else:
             raise NotImplementedError
 
-        return duration_source + duration_path
+        return self.duration_source + self.duration_path
 
     def calc_fourier_amps(self, freqs: npt.ArrayLike | None = None) -> np.ndarray:
         """Compute the acceleration Fourier amplitudes for a frequency range.
@@ -762,24 +762,24 @@ class SourceTheoryMotion(RvtMotion):
         self._duration = self.calc_duration()
 
         # Model component
-        const = (0.55 * 2.0) / (
+        self.const = (0.55 * 2.0) / (
             np.sqrt(2.0) * 4.0 * np.pi * self.density * self.shear_velocity**3.0
         )
-        source_comp = (
-            const
+        self.source_comp = (
+            self.const
             * self.seismic_moment
             / (1.0 + (self._freqs / self.corner_freq) ** 2.0)
         )
 
         # Path component
-        path_atten = self.path_atten_coeff * self._freqs**self.path_atten_power
-        geo_atten = calc_geometric_spreading(
+        self.path_atten = self.path_atten_coeff * self._freqs**self.path_atten_power
+        self.geo_atten = calc_geometric_spreading(
             self.hypo_distance, self.geometric_spreading
         )
 
-        path_comp = geo_atten * np.exp(
+        self.path_comp = self.geo_atten * np.exp(
             (-np.pi * self._freqs * self.hypo_distance)
-            / (path_atten * self.shear_velocity)
+            / (self.path_atten * self.shear_velocity)
         )
 
         # Site component
@@ -800,8 +800,8 @@ class SourceTheoryMotion(RvtMotion):
         self._fourier_amps = (
             conv
             * (2.0 * np.pi * self._freqs) ** 2.0
-            * source_comp
-            * path_comp
+            * self.source_comp
+            * self.path_comp
             * site_comp
         )
 
