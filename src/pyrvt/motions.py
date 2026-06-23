@@ -869,7 +869,7 @@ class StaffordEtAl22Motion(RvtMotion):
             # Compute rupture distance for dist_jb
             depth_tor = StaffordEtAl22Motion.calc_depth_tor(mag, mechanism)
             dist_rup = np.sqrt(depth_tor**2 + dist_jb**2)
-
+            self._dist_rup = dist_rup
         super().__init__(
             peak_calculator="BT15",
             calc_kwds={"mag": mag, "dist": dist_rup, "region": "wus"},
@@ -879,7 +879,8 @@ class StaffordEtAl22Motion(RvtMotion):
             self._freqs = np.geomspace(0.05, 200, 512)
         else:
             self._freqs = np.asarray(freqs)
-
+        self._mag = mag
+        
         # Constants
         shear_vel = 3.5
         density = 2.75
