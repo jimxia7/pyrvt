@@ -965,6 +965,7 @@ class StaffordEtAl22Motion(RvtMotion):
             self.geom_spread = calc_geometric_spreading(
                 dist_ps, [(y_1, 25), (y_2, 85), (y_f, None)]
             )
+            self.n = n
             self.dist_ae = dist_ps
         else:
             raise NotImplementedError
