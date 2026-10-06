@@ -548,8 +548,12 @@ class RvtMotion:
         freqs = self.freqs[mask]
         fitted = np.exp(intercept + slope * freqs)
         return atten, r_value**2, freqs, fitted
+    
+    def scale_to_pga(self,pga_target):
+        self._fourier_amps = self._fourier_amps*pga_target/self.pga
 
-
+    def scale(self,scale_factors):
+        self._fourier_amps = self._fourier_amps*scale_factors
 class SourceTheoryMotion(RvtMotion):
     """Single-corner source theory model.
 
